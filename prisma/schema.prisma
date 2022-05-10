@@ -11,12 +11,13 @@ datasource db {
 }
 
 model Post {
-  id           String  @id @default(auto()) @map("_id") @db.ObjectId
-  slug         String  @unique
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  slug         String   @unique
   title        String
   body         String
-  author       User    @relation(fields: [authorID], references: [id])
-  authorID     String  @db.ObjectId
+  author       User     @relation(fields: [authorID], references: [id])
+  authorID     String   @db.ObjectId
+  created      DateTime @default(now())
   nextPost     String?
   previousPost String?
 }
