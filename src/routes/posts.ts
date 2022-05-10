@@ -1,10 +1,8 @@
 import { Router } from 'express';
-import { StatusCodes } from 'http-status-codes';
 import { getPostList } from 'src/controllers/postsController';
 
 // Constants
 const router = Router();
-const { CREATED, OK, NOT_FOUND } = StatusCodes;
 
 /// Main page routes ///
 

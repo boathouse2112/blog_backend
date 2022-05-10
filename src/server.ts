@@ -1,6 +1,6 @@
 import { CustomError } from '@shared/errors';
 import cookieParser from 'cookie-parser';
-import express, { Request, Response } from 'express';
+import express, { NextFunction, Request, Response } from 'express';
 import 'express-async-errors';
 import helmet from 'helmet';
 import StatusCodes from 'http-status-codes';
@@ -36,17 +36,25 @@ if (process.env.NODE_ENV === 'production') {
  **********************************************************************************/
 
 // Add api router
-app.use('/api', apiRouter);
+app.use('/', apiRouter);
 
 // Error handling
-app.use((err: Error | CustomError, _: Request, res: Response) => {
-  logger.err(err, true);
-  const status =
-    err instanceof CustomError ? err.HttpStatus : StatusCodes.BAD_REQUEST;
-  return res.status(status).json({
-    error: err.message,
-  });
-});
+app.use(
+  (
+    err: Error | CustomError,
+    _req: Request,
+    res: Response,
+    _next: NextFunction
+  ) => {
+    logger.err(err, true);
+    const status =
+      err instanceof CustomError ? err.HttpStatus : StatusCodes.BAD_REQUEST;
+    console.log(res, '\n\n\n\n\n\n\n');
+    return res.status(status).json({
+      error: err.message,
+    });
+  }
+);
 
 /***********************************************************************************
  *                                  Front-end content

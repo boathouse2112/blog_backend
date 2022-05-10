@@ -18,8 +18,9 @@ model Post {
   author       User     @relation(fields: [authorID], references: [id])
   authorID     String   @db.ObjectId
   created      DateTime @default(now())
-  nextPost     String?
-  previousPost String?
+  nextPost     Post?    @relation("PreviousNextPosts", fields: [nextPostID], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  nextPostID   String?  @unique @db.ObjectId
+  previousPost Post?    @relation("PreviousNextPosts")
 }
 
 model User {
