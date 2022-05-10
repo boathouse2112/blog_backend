@@ -1,5 +1,6 @@
 import { CustomError } from '@shared/errors';
 import cookieParser from 'cookie-parser';
+import cors from 'cors';
 import express, { NextFunction, Request, Response } from 'express';
 import 'express-async-errors';
 import helmet from 'helmet';
@@ -31,6 +32,9 @@ if (process.env.NODE_ENV === 'production') {
   app.use(helmet());
 }
 
+// Make CORS work
+app.use(cors<Request>());
+
 /***********************************************************************************
  *                         API routes and error handling
  **********************************************************************************/
@@ -49,7 +53,6 @@ app.use(
     logger.err(err, true);
     const status =
       err instanceof CustomError ? err.HttpStatus : StatusCodes.BAD_REQUEST;
-    console.log(res, '\n\n\n\n\n\n\n');
     return res.status(status).json({
       error: err.message,
     });
@@ -68,10 +71,12 @@ app.set('views', viewsDir);
 const staticDir = path.join(__dirname, 'public');
 app.use(express.static(staticDir));
 
+/*
 // Serve index.html file
 app.get('*', (_: Request, res: Response) => {
   res.sendFile('index.html', { root: viewsDir });
 });
+*/
 
 // Export here and start in a diff file (for testing).
 export default app;

@@ -11,21 +11,9 @@ datasource db {
 }
 
 model Post {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  slug         String   @unique
-  title        String
-  body         String
-  author       User     @relation(fields: [authorID], references: [id])
-  authorID     String   @db.ObjectId
-  created      DateTime @default(now())
-  nextPost     Post?    @relation("PreviousNextPosts", fields: [nextPostID], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  nextPostID   String?  @unique @db.ObjectId
-  previousPost Post?    @relation("PreviousNextPosts")
-}
-
-model User {
-  id    String  @id @default(auto()) @map("_id") @db.ObjectId
-  email String  @unique
-  name  String?
-  Posts Post[]
+  id      String   @id @default(auto()) @map("_id") @db.ObjectId
+  slug    String   @unique
+  title   String
+  body    String
+  created DateTime @default(now())
 }

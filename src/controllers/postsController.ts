@@ -1,20 +1,37 @@
-/* eslint-disable @typescript-eslint/restrict-template-expressions */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 import { Post, PrismaClient } from '@prisma/client';
+import dayjs from 'dayjs';
 import { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 
-const postURL = (post: Post, hostname: string) => {
-  const date = post.created;
-  const year = date.getFullYear;
-  const month = date.getMonth() + 1;
-  const day = date.getDate();
-  return `${hostname}/${year}/${month}/${day}`;
+const prisma = new PrismaClient();
+const { OK } = StatusCodes;
+
+type PostResponse = {
+  id: string;
+  slug: string;
+  title: string;
+  body: string;
+  created: Date;
+  nextPost?: {
+    title: string;
+    URL: string;
+  };
+  previousPost?: {
+    title: string;
+    URL: string;
+  };
 };
 
-const prisma = new PrismaClient();
-
-const { OK } = StatusCodes;
+// TODO: The URLs are specific to our front-end. It's a bad idea to calculate it on the back-end.
+/**
+ * Get the relative URL of the given post.
+ * @param post
+ */
+const postURL = (post: Post): string => {
+  const dateString = dayjs(post.created).format('YYYY/MM/DD');
+  const slug = post.slug;
+  return `${dateString}/${slug}`;
+};
 
 const jsonSuccess = (data: Record<string, unknown>) => ({
   status: 'success',
@@ -52,6 +69,8 @@ const getPostList = async (req: Request, res: Response) => {
     limit = parseInt(limitParam, 10);
   }
 
+  const postCount = await prisma.post.count();
+
   // Create links to the next and previous page of results, if they exist.
   let previousPageLink;
   // A previous page exists if we can go back `n = limit` posts, and still have `start >= 0`
@@ -61,8 +80,6 @@ const getPostList = async (req: Request, res: Response) => {
     }&limit=${limit}`;
   }
 
-  const postCount = await prisma.post.count();
-
   let nextPageLink;
   // A next page exists if there are more than `n = start + limit` posts in the database
   if (postCount > start + limit) {
@@ -71,34 +88,72 @@ const getPostList = async (req: Request, res: Response) => {
     }&limit=${limit}`;
   }
 
-  // Get the nth page of posts from the db
+  // Update start and limit to get one extra post on each end, if they exist.
+  // This lets us add links to previous and next post.
+  const newerPostExists = start > 0;
+  const olderPostExists = start + limit + 1 < postCount;
+
+  let dbStart, dbLimit;
+  if (newerPostExists && olderPostExists) {
+    dbStart = start - 1;
+    dbLimit = limit + 2; // +1 for each additional post
+  } else if (newerPostExists && !olderPostExists) {
+    dbStart = start - 1;
+    dbLimit = limit + 1;
+  } else if (!newerPostExists && olderPostExists) {
+    dbStart = start;
+    dbLimit = limit + 1;
+  } else {
+    dbStart = start;
+    dbLimit = limit;
+  }
   const posts = await prisma.post.findMany({
     orderBy: [{ created: 'desc' }],
-    skip: start,
-    take: limit,
+    skip: dbStart,
+    take: dbLimit,
+  });
+  console.log(posts.length);
+
+  // Wire up nextPost links.
+  const postsWithNextLinks = posts.map((post, idx) => {
+    // The earlier a post is in Post[], the newer it is
+    const nextPost = posts[idx - 1];
+    const nextPostValues =
+      nextPost === undefined
+        ? undefined
+        : {
+            title: nextPost.title,
+            URL: postURL(nextPost),
+          };
+    return nextPost === undefined ? post : { ...post, nextPostValues };
+  });
+  console.log(posts.length);
+
+  const postsWithLinks = postsWithNextLinks.map((post, idx) => {
+    const previousPost = posts[idx + 1];
+    const previousPostValues =
+      previousPost === undefined
+        ? undefined
+        : {
+            title: previousPost.title,
+            URL: postURL(previousPost),
+          };
+    return previousPost === undefined ? post : { ...post, previousPostValues };
   });
 
-  /*
-  // Get the first newer post before this page.
-  const nextNewPageIndex = start - 1 >= 0 ? start - 1 : undefined;
-  const nextNewPage = await prisma.post.findFirst({
-    orderBy: [{ created: 'desc' }],
-    skip: nextNewPageIndex,
-  });
-
-  // Get the first older post after this page
-  const previousOldPageIndex =
-    start + limit + 1 < postCount ? start + limit + 1 : undefined;
-  const previousOldPage = await prisma.post.findFirst({
-    orderBy: [{ created: 'desc' }],
-    skip: previousOldPageIndex,
-  });
-
-  // Wire up next and previous pages
-  if (nextNewPage !== null) {
-    posts[0].nextPostLink = postURL(nextNewPage, req.hostname);
+  // Now that we've added our links, remove any extra posts we queried.
+  if (newerPostExists) {
+    // Remove the first post
+    postsWithLinks.shift();
   }
-  */
+  if (olderPostExists) {
+    // Remove the last post
+    postsWithLinks.pop();
+  }
+  console.assert(postsWithLinks.length > 0);
+
+  // Ensure that we have the right response type
+  const responsePosts: PostResponse[] = postsWithLinks;
 
   // Return page links if they exist, and a list of posts
   return res.status(OK).json(
@@ -107,7 +162,7 @@ const getPostList = async (req: Request, res: Response) => {
         previous: previousPageLink,
         next: nextPageLink,
       },
-      posts: posts,
+      posts: responsePosts,
     })
   );
 };

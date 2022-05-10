@@ -14,11 +14,17 @@ const router = Router();
  *    status: "success"
  *    data:   {
  *      _links: {
- *        "previous"?: "<LINK>"
- *        "next"?: "<LINK>"
+ *        "previousPage"?: "<LINK>"
+ *        "nextPage"?: "<LINK>"
  *      }
  *      posts: [
- *        { <POST_CONTENT> }
+ *        {
+ *          <POST_CONTENT>,
+ *          authorName,
+ *          authorLink,          // Relative to hostname
+ *          previousPostLink?,
+ *          nextPostLink?,
+ *        }
  *      ]
  *    }
  * }
