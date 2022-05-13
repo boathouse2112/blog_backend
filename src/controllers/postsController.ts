@@ -1,12 +1,14 @@
-import { Post, PrismaClient } from '@prisma/client';
-import dayjs from 'dayjs';
+import { PrismaClient } from '@prisma/client';
 import { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
+import { isNumber, postURL } from 'src/util/functions';
 
 const prisma = new PrismaClient();
 const { OK } = StatusCodes;
 
-type PostResponse = {
+const POSTS_PER_PAGE = 5;
+
+type PostData = {
   id: string;
   slug: string;
   title: string;
@@ -22,30 +24,44 @@ type PostResponse = {
   };
 };
 
-// TODO: The URLs are specific to our front-end. It's a bad idea to calculate it on the back-end.
-/**
- * Get the relative URL of the given post.
- * @param post
- */
-const postURL = (post: Post): string => {
-  const dateString = dayjs(post.created).format('YYYY/MM/DD');
-  const slug = post.slug;
-  return `${dateString}/${slug}`;
+type PostListResponse = {
+  _links: {
+    previous?: string;
+    next?: string;
+  };
+  posts: PostData[];
 };
 
-const jsonSuccess = (data: Record<string, unknown>) => ({
+type JSONSuccess = {
+  status: 'success';
+  data: PostListResponse;
+};
+
+type JSONFailure = {
+  status: 'failure' | 'error';
+  data: string;
+};
+
+type JSONResponse = JSONSuccess | JSONFailure;
+
+const jsonSuccess = (data: PostListResponse): JSONResponse => ({
   status: 'success',
   data,
 });
 
-const jsonFail = (failMessage: string) => ({
-  status: 'fail',
-  data: { posts: failMessage },
+const jsonFail = (failMessage: string): JSONResponse => ({
+  status: 'failure',
+  data: failMessage,
 });
 
-const isNumber = (value: string) => /^-?\d+$/.test(value);
-
-const getPostList = async (req: Request, res: Response) => {
+/**
+ * Gets a single page of posts.
+ * Returns `n = POSTS_PER_PAGE` posts.
+ *
+ * @param page The page of posts to get.
+ * @returns
+ */
+const getPostList = async (req: Request, res: Response): Promise<void> => {
   const startParam = req.query.start; // Post to start at, zero-indexed
   const limitParam = req.query.limit; // Number of pages to return
 
@@ -54,7 +70,8 @@ const getPostList = async (req: Request, res: Response) => {
   if (startParam === undefined) {
     start = 0;
   } else if (typeof startParam !== 'string' || !isNumber(startParam)) {
-    return res.status(OK).json(jsonFail('invalid `start` parameter'));
+    res.status(OK).json(jsonFail('invalid `start` parameter'));
+    return;
   } else {
     start = parseInt(startParam, 10);
   }
@@ -64,7 +81,8 @@ const getPostList = async (req: Request, res: Response) => {
   if (limitParam === undefined) {
     limit = 5;
   } else if (typeof limitParam !== 'string' || !isNumber(limitParam)) {
-    return res.status(OK).json(jsonFail('invalid `limit` parameter'));
+    res.status(OK).json(jsonFail('invalid `limit` parameter'));
+    return;
   } else {
     limit = parseInt(limitParam, 10);
   }
@@ -153,10 +171,10 @@ const getPostList = async (req: Request, res: Response) => {
   console.assert(postsWithLinks.length > 0);
 
   // Ensure that we have the right response type
-  const responsePosts: PostResponse[] = postsWithLinks;
+  const responsePosts: PostData[] = postsWithLinks;
 
   // Return page links if they exist, and a list of posts
-  return res.status(OK).json(
+  res.status(OK).json(
     jsonSuccess({
       _links: {
         previous: previousPageLink,
