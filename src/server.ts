@@ -1,4 +1,3 @@
-import { CustomError } from '@shared/errors';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express, { NextFunction, Request, Response } from 'express';
@@ -8,6 +7,7 @@ import StatusCodes from 'http-status-codes';
 import logger from 'jet-logger';
 import morgan from 'morgan';
 import path from 'path';
+import { CustomError } from 'src/util/errors';
 import apiRouter from './routes/api';
 
 // Constants

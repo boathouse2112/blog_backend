@@ -7,15 +7,15 @@ const router = Router();
 /// Main page routes ///
 
 /**
- * @param start First page to get, zero-indexed. Optional.
- * @param limit Number of pages to get. Optional.
+ * /page/:pageNumber
+ * @param pageNumber
  * @returns One of:
  * {
  *    status: "success"
  *    data:   {
  *      _links: {
- *        "previousPage"?: "<LINK>"
- *        "nextPage"?: "<LINK>"
+ *        "previousPage"?: <API_PATH>
+ *        "nextPage"?: "<API_PATH>"
  *      }
  *      posts: [
  *        {
@@ -32,9 +32,7 @@ const router = Router();
  * Or:
  * {
  *    status: "fail"
- *    data: {
- *      posts: "No posts found starting at <START_PARAM>"
- *    }
+ *    data: "No posts found on page <PAGE_NUMBER>"
  * }
  *
  * If the request found a real API endpoint, I'm keeping errors in the JSON,
@@ -42,5 +40,6 @@ const router = Router();
  */
 router.get('/', getPostList);
 router.get('/page/:pageNumber', getPostList);
+// router.get('/:slug', getPost);
 
 export default router;

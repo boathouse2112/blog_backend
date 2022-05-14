@@ -19,14 +19,6 @@
     ],
     "exec": "./node_modules/.bin/ts-node -r tsconfig-paths/register ./src"
   },
-  "_moduleAliases": {
-    "@services": "dist/services",
-    "@repos": "dist/repos",
-    "@entities": "dist/entities",
-    "@shared": "dist/shared",
-    "@server": "dist/server",
-    "@routes": "dist/routes"
-  },
   "eslintConfig": {
     "parser": "@typescript-eslint/parser",
     "plugins": [
@@ -95,7 +87,7 @@
     "fs-extra": "^10.1.0",
     "jasmine": "^4.1.0",
     "nodemon": "^2.0.16",
-    "prisma": "^3.13.0",
+    "prisma": "^3.14.0",
     "supertest": "^6.2.3",
     "ts-node": "^10.7.0",
     "tsconfig-paths": "^4.0.0",
