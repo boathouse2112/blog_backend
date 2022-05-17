@@ -1,5 +1,4 @@
 import { Prisma, PrismaClient } from '@prisma/client';
-import { randomUUID } from 'crypto';
 
 // Populate the database with some test posts.
 
@@ -20,7 +19,7 @@ const titles = [
 const createPost: (title: string) => Prisma.PostCreateManyInput = (
   title: string
 ) => ({
-  slug: 'i-dont-think-so' + randomUUID().toString(),
+  slug: title,
   title: title,
   body:
     'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor ' +
@@ -32,13 +31,16 @@ const createPost: (title: string) => Prisma.PostCreateManyInput = (
     'qui officia deserunt mollit anim id est laborum.',
 });
 
-const posts = titles.map(createPost);
+const posts = titles.map(createPost).reverse();
 
 const main = async () => {
   await prisma.$connect();
 
   // Create posts
-  await prisma.post.createMany({ data: posts });
+  for (const post of posts) {
+    await prisma.post.create({ data: post });
+    await new Promise((resolve) => setTimeout(resolve, 200));
+  }
 };
 
 main()

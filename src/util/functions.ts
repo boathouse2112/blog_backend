@@ -1,26 +1,6 @@
 import { Post } from '@prisma/client';
 import dayjs from 'dayjs';
-import logger from 'jet-logger';
-
-/**
- * Print an error object if it's truthy. Useful for testing.
- *
- * @param err
- */
-function pErr(err?: Error): void {
-  if (!!err) {
-    logger.err(err);
-  }
-}
-
-/**
- * Get a random number between 1 and 1,000,000,000,000
- *
- * @returns
- */
-function getRandomInt(): number {
-  return Math.floor(Math.random() * 1_000_000_000_000);
-}
+import { JSONResponse, JSONSuccessData } from './types';
 
 // TODO: The URLs are specific to our front-end. It's a bad idea to calculate it on the back-end.
 /**
@@ -41,4 +21,24 @@ const postURL = (post: Post): string => {
  */
 const isNumber = (value: string) => /^-?\d+$/.test(value);
 
-export { pErr, getRandomInt, postURL, isNumber };
+/**
+ * Create a successful JSON response
+ * @param data
+ * @returns
+ */
+const jsonSuccess = (data: JSONSuccessData): JSONResponse => ({
+  status: 'success',
+  data,
+});
+
+/**
+ * Create a failing JSON response
+ * @param failMessage
+ * @returns
+ */
+const jsonFail = (failMessage: string): JSONResponse => ({
+  status: 'failure',
+  data: failMessage,
+});
+
+export { postURL, isNumber, jsonSuccess, jsonFail };
