@@ -7,7 +7,10 @@ import { PostData } from 'src/util/types';
 const prisma = new PrismaClient();
 const { OK } = StatusCodes;
 
-const getPostNeighbors = async (postId: number) => {
+/**
+ * Get the id's of the given posts neighbors, when posts are sorted in descending order of creation.
+ */
+const neighborIds = async (postId: number) => {
   const result: [{ id: number; previousid: number; nextid: number }] =
     await prisma.$queryRaw(Prisma.sql`
   WITH shifted AS (
@@ -20,9 +23,16 @@ const getPostNeighbors = async (postId: number) => {
   FROM shifted
   WHERE id = ${postId};
   `);
-  console.log(result);
+  // I can't get prisma to return correctly capitalized previousId and nextId.
   const { previousid: previousId, nextid: nextId } = result[0];
-  console.log('previous', previousId);
+  return { previousId, nextId };
+};
+
+/**
+ * Get the the given posts neighbors, when posts are sorted in descending order of creation.
+ */
+const postNeighbors = async (postId: number) => {
+  const { previousId, nextId } = await neighborIds(postId);
 
   const previousPost = previousId
     ? await prisma.post.findUnique({
@@ -58,7 +68,7 @@ const getPost = async (req: Request, res: Response) => {
   }
 
   // Add the post's neighbors, so there can be links to next and previous posts.
-  const neighbors = await getPostNeighbors(post.id);
+  const neighbors = await postNeighbors(post.id);
   console.log('neighbors: ', neighbors);
   const postWithNeighbors: PostData = { ...post, ...neighbors };
 
