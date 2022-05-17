@@ -5,9 +5,23 @@ import { randomUUID } from 'crypto';
 
 const prisma = new PrismaClient();
 
-const createPost: () => Prisma.PostCreateManyInput = () => ({
+const titles = [
+  'a',
+  'b',
+  'c',
+  'd',
+  'e',
+  'f',
+  'g',
+  'h',
+  'this last post title is quite long. Quite a slog. Veryyyyy lengthy.',
+];
+
+const createPost: (title: string) => Prisma.PostCreateManyInput = (
+  title: string
+) => ({
   slug: 'i-dont-think-so' + randomUUID().toString(),
-  title: "I don't think so.",
+  title: title,
   body:
     'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor ' +
     'incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud ' +
@@ -18,7 +32,7 @@ const createPost: () => Prisma.PostCreateManyInput = () => ({
     'qui officia deserunt mollit anim id est laborum.',
 });
 
-const posts = Array.from({ length: 20 }, () => createPost());
+const posts = titles.map(createPost);
 
 const main = async () => {
   await prisma.$connect();

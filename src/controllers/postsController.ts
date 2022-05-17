@@ -1,7 +1,7 @@
 import { Post, Prisma, PrismaClient } from '@prisma/client';
 import { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
-import { isNumber, postURL } from 'src/util/functions';
+import { isNumber } from 'src/util/functions';
 
 const prisma = new PrismaClient();
 const { OK } = StatusCodes;
@@ -68,56 +68,38 @@ const getPostNeighbors = async (postId: number) => {
  * Gets a single page of posts.
  * Returns `n = POSTS_PER_PAGE` posts.
  *
- * @param page The page of posts to get.
+ * @param page The page of posts to get. Starts at page 1.
  * @returns
  */
 const getPostList = async (req: Request, res: Response): Promise<void> => {
-  const { pageNumber: pageParam } = req.params;
+  const { page: pageParam } = req.params;
 
-  // If startParam is undefined, set to 0. If it can't be parsed to a number, return "fail"
-  let page;
-  if (pageParam === undefined) {
-    page = 0;
-  } else if (typeof pageParam !== 'string' || !isNumber(pageParam)) {
+  console.log(req.params);
+  console.log('pageParam: ', pageParam);
+  console.log(typeof pageParam);
+
+  if (typeof pageParam !== 'string' || !isNumber(pageParam)) {
     res.status(OK).json(jsonFail('invalid `page` parameter'));
     return;
-  } else {
-    page = parseInt(pageParam, 10);
   }
 
-  const start = page * POSTS_PER_PAGE; // Post to start db query at
+  const page = parseInt(pageParam, 10);
+
+  // Row where we start the query.
+  // Pages are 1-indexed, but start should be 0-indexed.
+  const start = (page - 1) * POSTS_PER_PAGE;
 
   const postCount = await prisma.post.count();
   const numberOfPages = Math.ceil(postCount / POSTS_PER_PAGE);
 
-  // Update start and limit to get one extra post on each end, if they exist.
-  // This lets us add links to previous and next post.
-  const newerPostExists = page > 0;
-  const olderPostExists = page + POSTS_PER_PAGE + 1 < postCount;
-
-  /*
-  let skip, dbLimit;
-  if (newerPostExists && olderPostExists) {
-    skip = start - 1;
-    dbLimit = POSTS_PER_PAGE + 2; // +1 for each additional post
-  } else if (newerPostExists && !olderPostExists) {
-    skip = start - 1;
-    dbLimit = POSTS_PER_PAGE + 1;
-  } else if (!newerPostExists && olderPostExists) {
-    skip = start;
-    dbLimit = POSTS_PER_PAGE + 1;
-  } else {
-    skip = start;
-    dbLimit = POSTS_PER_PAGE;
-  }
-  */
-  //console.log(`Skip: ${skip}, dbLimit: ${dbLimit}`);
+  console.log(`skip: ${start}, take: ${POSTS_PER_PAGE}`);
   const posts = await prisma.post.findMany({
     orderBy: [{ created: 'desc' }],
     skip: start,
     take: POSTS_PER_PAGE,
   });
-  console.log(posts.length);
+  console.log(posts);
+  /*
 
   // Wire up nextPost links.
   const postsWithNextLinks = posts.map((post, idx) => {
@@ -152,12 +134,13 @@ const getPostList = async (req: Request, res: Response): Promise<void> => {
 
   // Ensure that we have the right response type
   const responsePosts: Post[] = postsWithLinks;
+  */
 
   // Return page links if they exist, and a list of posts
   res.status(OK).json(
     jsonSuccess({
       numberOfPages,
-      posts: responsePosts,
+      posts: posts,
     })
   );
 };

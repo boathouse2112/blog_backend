@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import { getPostList } from 'src/controllers/postsController';
 
 // Constants
 const router = Router();
@@ -38,8 +37,7 @@ const router = Router();
  * If the request found a real API endpoint, I'm keeping errors in the JSON,
  * instead of responding with a 404 or something.
  */
-router.get('/', getPostList);
-router.get('/page/:pageNumber', getPostList);
+// router.get('/page/:pageNumber', getPostList);
 // router.get('/:slug', getPost);
 
 export default router;

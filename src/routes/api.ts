@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import pageRouter from './page';
 import postsRouter from './posts';
 import userRouter from './user-router';
 
@@ -6,6 +7,7 @@ import userRouter from './user-router';
 const baseRouter = Router();
 
 // Setup routers
+baseRouter.use('/page', pageRouter);
 baseRouter.use('/posts', postsRouter);
 baseRouter.use('/users', userRouter);
 
