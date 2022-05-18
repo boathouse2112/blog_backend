@@ -47,7 +47,7 @@ const responseDouble = () =>
   } as any);
 
 describe('getYear', () => {
-  test('correctly gets posts in 2022', async () => {
+  test('gets posts that exist in a given year', async () => {
     // arrange
     const req = {
       params: { year: '2022', page: '1' }, // Route params are always strings.
@@ -65,5 +65,39 @@ describe('getYear', () => {
         posts: [END_OF_2022, START_OF_2022],
       },
     });
+  });
+
+  test('returns [] if no posts exist in a given year', async () => {
+    // arrange
+    const req = {
+      params: { year: '1998', page: '1' }, // Route params are always strings.
+    } as any;
+    const res = responseDouble();
+
+    // act
+    await getYear(req, res);
+
+    // assert
+    expect(res._json).toStrictEqual({
+      status: 'success',
+      data: {
+        numberOfPages: 1,
+        posts: [],
+      },
+    });
+  });
+
+  test('reports failure if given a non-numeric year parameter', async () => {
+    // arrange
+    const req = {
+      params: { year: 'not-a-number', page: '1' }, // Route params are always strings.
+    } as any;
+    const res = responseDouble();
+
+    // act
+    await getYear(req, res);
+
+    // assert
+    expect(res._json.status).toBe('failure');
   });
 });
