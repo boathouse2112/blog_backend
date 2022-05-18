@@ -1,8 +1,13 @@
 import { Prisma, PrismaClient } from '@prisma/client';
-import dayjs, { ConfigType } from 'dayjs';
+import dayjs from 'dayjs';
+import objectSupport from 'dayjs/plugin/objectSupport';
+import utc from 'dayjs/plugin/utc';
 import { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
-import { isNumber, jsonFail, jsonSuccess } from 'src/util/functions';
+import { isNumber, jsonFail, jsonSuccess } from '../util/functions';
+
+dayjs.extend(objectSupport);
+dayjs.extend(utc);
 
 const POSTS_PER_PAGE = 5;
 
@@ -11,6 +16,7 @@ const { OK } = StatusCodes;
 
 const getPageWhere =
   (where?: Prisma.PostWhereInput) => async (req: Request, res: Response) => {
+    console.log(where);
     const { page: pageParam } = req.params;
 
     if (typeof pageParam !== 'string' || !isNumber(pageParam)) {
@@ -34,6 +40,7 @@ const getPageWhere =
       take: POSTS_PER_PAGE,
     });
 
+    console.log(posts);
     res.status(OK).json(
       jsonSuccess({
         numberOfPages,
@@ -55,11 +62,10 @@ const getPage = getPageWhere();
  * Get the start of the given date.
  */
 const startOf = (year: number, month?: number, day?: number) => {
-  const dateArr = [year];
-  if (month) dateArr.push(month);
-  if (day) dateArr.push(day);
+  const monthZeroIndexed = month ? month - 1 : undefined;
+  const dateObj = { year, month: monthZeroIndexed ?? 0, day: day ?? 0 };
 
-  return dayjs(dateArr as ConfigType)
+  return dayjs(dateObj as any)
     .startOf('year')
     .toDate();
 };
@@ -68,15 +74,17 @@ const startOf = (year: number, month?: number, day?: number) => {
  * Get the end of the given date.
  */
 const endOf = (year: number, month?: number, day?: number) => {
-  const dateArr = [year];
-  if (month) dateArr.push(month);
-  if (day) dateArr.push(day);
+  const monthZeroIndexed = month ? month - 1 : undefined;
+  const dateObj = { year, month: monthZeroIndexed ?? 0, day: day ?? 0 };
 
-  return dayjs(dateArr as ConfigType)
+  return dayjs(dateObj as any)
     .endOf('year')
     .toDate();
 };
 
+/**
+ * Get all the posts in the given year.
+ */
 const getYear = (req: Request, res: Response) => {
   const { year: yearParam } = req.params;
 
@@ -91,7 +99,7 @@ const getYear = (req: Request, res: Response) => {
     created: { gte: startOf(year), lte: endOf(year) },
   });
 
-  getPage(req, res);
+  return getPage(req, res);
 };
 
 export { getPage, getYear };

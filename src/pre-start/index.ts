@@ -6,6 +6,9 @@
 import commandLineArgs from 'command-line-args';
 import dayjs from 'dayjs';
 import arraySupport from 'dayjs/plugin/arraySupport';
+import objectSupport from 'dayjs/plugin/objectSupport';
+import timezone from 'dayjs/plugin/timezone';
+import utc from 'dayjs/plugin/utc';
 import dotenv from 'dotenv';
 import path from 'path';
 
@@ -29,5 +32,8 @@ import path from 'path';
   }
 
   // Extend dayjs
+  dayjs.extend(objectSupport);
   dayjs.extend(arraySupport);
+  dayjs.extend(timezone);
+  dayjs.extend(utc);
 })();
