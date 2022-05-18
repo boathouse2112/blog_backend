@@ -16,7 +16,6 @@ const { OK } = StatusCodes;
 
 const getPageWhere =
   (where?: Prisma.PostWhereInput) => async (req: Request, res: Response) => {
-    console.log(where);
     const { page: pageParam } = req.params;
 
     if (typeof pageParam !== 'string' || !isNumber(pageParam)) {
@@ -30,7 +29,7 @@ const getPageWhere =
     // Pages are 1-indexed, but start should be 0-indexed.
     const start = (page - 1) * POSTS_PER_PAGE;
 
-    const postCount = await prisma.post.count();
+    const postCount = await prisma.post.count({ where: where });
     const numberOfPages = Math.ceil(postCount / POSTS_PER_PAGE);
 
     const posts = await prisma.post.findMany({
@@ -40,7 +39,11 @@ const getPageWhere =
       take: POSTS_PER_PAGE,
     });
 
-    console.log(posts);
+    if (posts.length === 0) {
+      res.status(OK).json(jsonFail('No posts found'));
+      return;
+    }
+
     res.status(OK).json(
       jsonSuccess({
         numberOfPages,

@@ -1,8 +1,8 @@
 import { PrismaClient } from '@prisma/client';
 import dayjs from 'dayjs';
-import { getYear } from '../pageController';
+import { getPage, getYear } from '../pageController';
 
-// Post constants
+// Posts
 const postOnDate = (year: number, month: number, day: number, slug: string) => {
   return {
     id: Math.ceil(Math.random() * 1000), // Unique integer ID
@@ -14,23 +14,19 @@ const postOnDate = (year: number, month: number, day: number, slug: string) => {
   };
 };
 
+const END_OF_2021 = postOnDate(2021, 12, 31, 'end-of-2021');
 const START_OF_2022 = postOnDate(2022, 1, 1, 'start-of-2022');
 const END_OF_2022 = postOnDate(2022, 12, 31, 'end-of-2022');
 const START_OF_2023 = postOnDate(2023, 1, 1, 'start-of-2023');
 
+const JAN_1 = postOnDate(2000, 1, 1, 'jan-1');
+const JAN_2 = postOnDate(2000, 1, 2, 'jan-2');
+const JAN_3 = postOnDate(2000, 1, 3, 'jan-3');
+const JAN_4 = postOnDate(2000, 1, 4, 'jan-4');
+const JAN_5 = postOnDate(2000, 1, 5, 'jan-5');
+
 // Initialize prisma client
 const prisma = new PrismaClient();
-
-beforeAll(async () => {
-  await prisma.post.createMany({
-    data: [START_OF_2022, END_OF_2022, START_OF_2023],
-  });
-});
-
-afterAll(async () => {
-  // Truncate the Post table
-  await prisma.post.deleteMany({ where: {} });
-});
 
 // Response test double
 // Sent JSON can be read from _json property
@@ -41,12 +37,123 @@ const responseDouble = () =>
       return this;
     },
     json: function (data: any) {
-      console.log('data ', data);
       this._json = data;
     },
   } as any);
 
+describe('getPage', () => {
+  beforeAll(async () => {
+    await prisma.post.createMany({
+      data: [
+        START_OF_2022,
+        END_OF_2022,
+        START_OF_2023,
+        END_OF_2021,
+        JAN_1,
+        JAN_2,
+        JAN_3,
+        JAN_4,
+        JAN_5,
+      ],
+    });
+  });
+
+  afterAll(async () => {
+    // Truncate the Post table
+    await prisma.post.deleteMany({ where: {} });
+  });
+
+  test('gets a full page of posts', async () => {
+    // arrange
+    const req = {
+      params: { page: '1' }, // Route params are always strings.
+    } as any;
+    const res = responseDouble();
+
+    // act
+    await getPage(req, res);
+
+    // assert
+    expect(res._json).toStrictEqual({
+      status: 'success',
+      data: {
+        numberOfPages: 2,
+        posts: [START_OF_2023, END_OF_2022, START_OF_2022, END_OF_2021, JAN_5],
+      },
+    });
+  });
+
+  test('gets a partial page of posts', async () => {
+    // arrange
+    const req = {
+      params: { page: '2' }, // Route params are always strings.
+    } as any;
+    const res = responseDouble();
+
+    // act
+    await getPage(req, res);
+
+    // assert
+    expect(res._json).toStrictEqual({
+      status: 'success',
+      data: {
+        numberOfPages: 2,
+        posts: [JAN_4, JAN_3, JAN_2, JAN_1],
+      },
+    });
+  });
+
+  test('reports failure if given a page that is too high', async () => {
+    // arrange
+    const req = {
+      params: { page: '3' }, // Route params are always strings.
+    } as any;
+    const res = responseDouble();
+
+    // act
+    await getPage(req, res);
+
+    // assert
+    expect(res._json.status).toBe('failure');
+  });
+
+  test('reports failure if given a non-numeric page', async () => {
+    // arrange
+    const req = {
+      params: { page: 'not-a-number' }, // Route params are always strings.
+    } as any;
+    const res = responseDouble();
+
+    // act
+    await getPage(req, res);
+
+    // assert
+    expect(res._json.status).toBe('failure');
+  });
+});
+
 describe('getYear', () => {
+  beforeAll(async () => {
+    await prisma.post.createMany({
+      data: [
+        START_OF_2022,
+        END_OF_2022,
+        START_OF_2023,
+        END_OF_2021,
+        JAN_1,
+        JAN_2,
+        JAN_3,
+        JAN_4,
+        JAN_5,
+      ],
+    });
+  });
+
+  afterAll(async () => {
+    // Truncate the Post table
+    await prisma.post.deleteMany({ where: {} });
+  });
+
   test('gets posts that exist in a given year', async () => {
     // arrange
     const req = {
@@ -67,7 +174,7 @@ describe('getYear', () => {
     });
   });
 
-  test('returns [] if no posts exist in a given year', async () => {
+  test('reports failure if no posts exist in a given year', async () => {
     // arrange
     const req = {
       params: { year: '1998', page: '1' }, // Route params are always strings.
@@ -78,13 +185,7 @@ describe('getYear', () => {
     await getYear(req, res);
 
     // assert
-    expect(res._json).toStrictEqual({
-      status: 'success',
-      data: {
-        numberOfPages: 1,
-        posts: [],
-      },
-    });
+    expect(res._json.status).toBe('failure');
   });
 
   test('reports failure if given a non-numeric year parameter', async () => {
