@@ -8,7 +8,7 @@ import { JSONResponse, JSONSuccessData } from './types';
  * @param post
  */
 const postURL = (post: Post): string => {
-  const dateString = dayjs(post.created).format('YYYY/MM/DD');
+  const dateString = dayjs.utc(post.created).format('YYYY/MM/DD');
   const slug = post.slug;
   return `${dateString}/${slug}`;
 };

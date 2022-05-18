@@ -1,6 +1,9 @@
 import { PrismaClient } from '@prisma/client';
 import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
 import { getPost } from '../postController';
+
+dayjs.extend(utc);
 
 const postOnDate = (
   year: number,
@@ -11,7 +14,7 @@ const postOnDate = (
   id: Math.ceil(Math.random() * 1000), // Unique integer ID
   title: "These days, it's blue to be green.",
   slug,
-  created: dayjs([year, month, day]).toDate(),
+  created: dayjs.utc([year, month, day]).toDate(),
   body: `I know what you're thinking, but the science is in.
     These days, it's just plain blue to be green.`,
 });

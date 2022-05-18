@@ -68,7 +68,8 @@ const startOf = (year: number, month?: number, day?: number) => {
   const monthZeroIndexed = month ? month - 1 : undefined;
   const dateObj = { year, month: monthZeroIndexed ?? 0, day: day ?? 0 };
 
-  return dayjs(dateObj as any)
+  return dayjs
+    .utc(dateObj as any)
     .startOf('year')
     .toDate();
 };
@@ -80,7 +81,8 @@ const endOf = (year: number, month?: number, day?: number) => {
   const monthZeroIndexed = month ? month - 1 : undefined;
   const dateObj = { year, month: monthZeroIndexed ?? 0, day: day ?? 0 };
 
-  return dayjs(dateObj as any)
+  return dayjs
+    .utc(dateObj as any)
     .endOf('year')
     .toDate();
 };
@@ -95,7 +97,6 @@ const getYear = (req: Request, res: Response) => {
     res.status(OK).json(jsonFail('invalid `year` parameter'));
     return;
   }
-
   const year = parseInt(yearParam, 10);
 
   const getPage = getPageWhere({
@@ -105,4 +106,29 @@ const getYear = (req: Request, res: Response) => {
   return getPage(req, res);
 };
 
-export { getPage, getYear };
+/**
+ * Get all the posts in a given month
+ */
+const getMonth = (req: Request, res: Response) => {
+  const { year: yearParam, month: monthParam } = req.params;
+
+  if (typeof yearParam !== 'string' || !isNumber(yearParam)) {
+    res.status(OK).json(jsonFail('invalid `year` parameter'));
+    return;
+  }
+  const year = parseInt(yearParam, 10);
+
+  if (typeof monthParam !== 'string' || !isNumber(monthParam)) {
+    res.status(OK).json(jsonFail('invalid `month` parameter'));
+    return;
+  }
+  const month = parseInt(monthParam, 10);
+
+  const getPage = getPageWhere({
+    created: { gte: startOf(year, month), lte: endOf(year, month) },
+  });
+
+  return getPage(req, res);
+};
+
+export { getPage, getYear, getMonth };

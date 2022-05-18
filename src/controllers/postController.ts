@@ -39,7 +39,6 @@ const postNeighbors = async (postId: number) => {
         where: { id: previousId },
       })
     : undefined;
-  console.log('previousPost', previousPost);
   const nextPost = nextId
     ? await prisma.post.findUnique({ where: { id: nextId } })
     : undefined;
@@ -69,10 +68,7 @@ const getPost = async (req: Request, res: Response) => {
 
   // Add the post's neighbors, so there can be links to next and previous posts.
   const neighbors = await postNeighbors(post.id);
-  console.log('neighbors: ', neighbors);
   const postWithNeighbors: PostData = { ...post, ...neighbors };
-
-  console.log('postWithNeighbors: ', postWithNeighbors);
 
   res.status(OK).json(jsonSuccess(postWithNeighbors));
 };
