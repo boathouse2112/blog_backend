@@ -5,7 +5,7 @@
     "build": "tsc",
     "start": "yes | prisma migrate reset && ts-node ./src/populateDB.ts && nodemon",
     "start:prod": "node -r module-alias/register ./dist --env=production",
-    "test": "yes | prisma migrate reset && jest --runInBand"
+    "test": "yes | prisma migrate reset && jest --runInBand --watch"
   },
   "nodemonConfig": {
     "watch": [
@@ -30,12 +30,6 @@
       "project": "./tsconfig.json"
     },
     "rules": {
-      "max-len": [
-        "error",
-        {
-          "code": 100
-        }
-      ],
       "no-extra-boolean-cast": 0,
       "@typescript-eslint/no-empty-function": 0,
       "@typescript-eslint/restrict-plus-operands": 0,

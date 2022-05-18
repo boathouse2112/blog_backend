@@ -3,16 +3,19 @@ import dayjs from 'dayjs';
 import { getPage, getYear } from '../pageController';
 
 // Posts
-const postOnDate = (year: number, month: number, day: number, slug: string) => {
-  return {
-    id: Math.ceil(Math.random() * 1000), // Unique integer ID
-    title: "These days, it's blue to be green.",
-    slug,
-    created: dayjs([year, month, day]).toDate(),
-    body: `I know what you're thinking, but the science is in.
+const postOnDate = (
+  year: number,
+  month: number,
+  day: number,
+  slug: string
+) => ({
+  id: Math.ceil(Math.random() * 1000), // Unique integer ID
+  title: "These days, it's blue to be green.",
+  slug,
+  created: dayjs([year, month, day]).toDate(),
+  body: `I know what you're thinking, but the science is in.
     These days, it's just plain blue to be green.`,
-  };
-};
+});
 
 const END_OF_2021 = postOnDate(2021, 12, 31, 'end-of-2021');
 const START_OF_2022 = postOnDate(2022, 1, 1, 'start-of-2022');

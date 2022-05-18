@@ -1,8 +1,8 @@
 import { Prisma, PrismaClient } from '@prisma/client';
 import { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
-import { jsonFail, jsonSuccess } from 'src/util/functions';
 import { PostData } from 'src/util/types';
+import { jsonFail, jsonSuccess } from '../util/functions';
 
 const prisma = new PrismaClient();
 const { OK } = StatusCodes;
@@ -71,6 +71,8 @@ const getPost = async (req: Request, res: Response) => {
   const neighbors = await postNeighbors(post.id);
   console.log('neighbors: ', neighbors);
   const postWithNeighbors: PostData = { ...post, ...neighbors };
+
+  console.log('postWithNeighbors: ', postWithNeighbors);
 
   res.status(OK).json(jsonSuccess(postWithNeighbors));
 };
