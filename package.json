@@ -3,8 +3,9 @@
   "version": "0.0.0",
   "scripts": {
     "build": "tsc",
-    "start": "nodemon",
-    "start:prod": "node -r module-alias/register ./dist --env=production"
+    "start": "yes | prisma migrate reset && ts-node ./src/populateDB.ts && nodemon",
+    "start:prod": "node -r module-alias/register ./dist --env=production",
+    "test": "yes | prisma migrate reset && jest"
   },
   "nodemonConfig": {
     "watch": [

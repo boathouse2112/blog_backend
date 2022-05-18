@@ -4,6 +4,8 @@
  */
 
 import commandLineArgs from 'command-line-args';
+import dayjs from 'dayjs';
+import arraySupport from 'dayjs/plugin/arraySupport';
 import dotenv from 'dotenv';
 import path from 'path';
 
@@ -25,4 +27,7 @@ import path from 'path';
   if (result2.error) {
     throw result2.error;
   }
+
+  // Extend dayjs
+  dayjs.extend(arraySupport);
 })();

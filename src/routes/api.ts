@@ -1,13 +1,11 @@
 import { Router } from 'express';
-import pageRouter from './page';
-import postRouter from './post';
+import postsRouter from './posts';
 
 // Export the base-router
 const baseRouter = Router();
 
 // Setup routers
-baseRouter.use('/page', pageRouter);
-baseRouter.use('/post', postRouter);
+baseRouter.use('/posts', postsRouter);
 
 // Export default.
 export default baseRouter;

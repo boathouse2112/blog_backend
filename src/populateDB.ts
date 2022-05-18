@@ -39,7 +39,7 @@ const main = async () => {
   // Create posts
   for (const post of posts) {
     await prisma.post.create({ data: post });
-    await new Promise((resolve) => setTimeout(resolve, 200));
+    await new Promise((resolve) => setTimeout(resolve, 10));
   }
 };
 
