@@ -19,7 +19,7 @@ type JSONSuccess = {
 
 type JSONFailure = {
   status: 'failure' | 'error';
-  data: string;
+  message: string;
 };
 
 type JSONResponse = JSONSuccess | JSONFailure;

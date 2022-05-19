@@ -38,7 +38,7 @@ const jsonSuccess = (data: JSONSuccessData): JSONResponse => ({
  */
 const jsonFail = (failMessage: string): JSONResponse => ({
   status: 'failure',
-  data: failMessage,
+  message: failMessage,
 });
 
 export { postURL, isNumber, jsonSuccess, jsonFail };

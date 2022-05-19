@@ -1,3 +1,4 @@
+import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express, { NextFunction, Request, Response } from 'express';
@@ -20,6 +21,7 @@ const app = express();
 // Common middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 app.use(cookieParser());
 
 // Show routes called in console during development

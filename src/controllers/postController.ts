@@ -73,4 +73,20 @@ const getPost = async (req: Request, res: Response) => {
   res.status(OK).json(jsonSuccess(postWithNeighbors));
 };
 
-export { getPost };
+const postPost = async (req: Request, res: Response) => {
+  const { slug } = req.params;
+  const resBody = req.body; // TODO: parse input with Zod etc.
+  const postTitle = resBody.title;
+  const postBody = resBody.body;
+
+  const post: Prisma.PostCreateInput = {
+    title: postTitle,
+    slug: slug,
+    body: postBody,
+  };
+
+  await prisma.post.create({ data: post });
+  res.sendStatus(200);
+};
+
+export { getPost, postPost };
