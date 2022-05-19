@@ -5,7 +5,7 @@ import { PostData } from 'src/util/types';
 import { jsonFail, jsonSuccess } from '../util/functions';
 
 const prisma = new PrismaClient();
-const { OK } = StatusCodes;
+const { OK, INTERNAL_SERVER_ERROR } = StatusCodes;
 
 /**
  * Get the id's of the given posts neighbors, when posts are sorted in descending order of creation.
@@ -50,43 +50,79 @@ const postNeighbors = async (postId: number) => {
 };
 
 const getPost = async (req: Request, res: Response) => {
-  const { slug } = req.params;
+  try {
+    const { slug } = req.params;
 
-  // If slug is undefined, return "fail"
-  if (slug === undefined) {
-    res.status(OK).json(jsonFail('Panic: no :slug param'));
-    return;
+    // If slug is undefined, return "fail"
+    if (slug === undefined) {
+      res.status(OK).json(jsonFail('Panic: no :slug param'));
+      return;
+    }
+
+    // Query the database for the requested post
+    const post = await prisma.post.findFirst({ where: { slug: slug } });
+
+    if (post === null) {
+      res.status(OK).json(jsonFail(`Post with slug ${slug} not found.`));
+      return;
+    }
+
+    // Add the post's neighbors, so there can be links to next and previous posts.
+    const neighbors = await postNeighbors(post.id);
+    const postWithNeighbors: PostData = { ...post, ...neighbors };
+
+    res.status(OK).json(jsonSuccess(postWithNeighbors));
+  } catch (_) {
+    res.sendStatus(INTERNAL_SERVER_ERROR);
   }
-
-  // Query the database for the requested post
-  const post = await prisma.post.findFirst({ where: { slug: slug } });
-
-  if (post === null) {
-    res.status(OK).json(jsonFail(`Post with slug ${slug} not found.`));
-    return;
-  }
-
-  // Add the post's neighbors, so there can be links to next and previous posts.
-  const neighbors = await postNeighbors(post.id);
-  const postWithNeighbors: PostData = { ...post, ...neighbors };
-
-  res.status(OK).json(jsonSuccess(postWithNeighbors));
 };
 
 const postPost = async (req: Request, res: Response) => {
-  const { slug } = req.params;
-  const resBody = req.body; // TODO: parse input with Zod etc.
-  const postTitle = resBody.title;
-  const postBody = resBody.body;
+  try {
+    const { slug } = req.params;
+    const { title, body } = req.body;
 
-  const post: Prisma.PostCreateInput = {
-    title: postTitle,
-    slug: slug,
-    body: postBody,
-  };
+    const post: Prisma.PostCreateInput = {
+      slug: slug,
+      title: title,
+      body: body,
+    };
 
-  await prisma.post.create({ data: post });
-  res.sendStatus(200);
+    await prisma.post.create({ data: post });
+    res.sendStatus(200);
+  } catch (_) {
+    res.sendStatus(INTERNAL_SERVER_ERROR);
+  }
 };
 
-export { getPost, postPost };
+const updatePost = async (req: Request, res: Response) => {
+  try {
+    const { slug } = req.params;
+    const { slug: postSlug, title, body } = req.body;
+
+    // TODO: Add an "updated" time field?
+    const postUpdates: Prisma.PostUpdateInput = {
+      slug: postSlug,
+      title: title,
+      body: body,
+    };
+
+    await prisma.post.update({ where: { slug: slug }, data: postUpdates });
+    res.sendStatus(OK);
+  } catch (_) {
+    res.sendStatus(INTERNAL_SERVER_ERROR);
+  }
+};
+
+const deletePost = async (req: Request, res: Response) => {
+  try {
+    const { slug } = req.params;
+
+    await prisma.post.delete({ where: { slug: slug } });
+    res.sendStatus(OK);
+  } catch (_) {
+    res.sendStatus(INTERNAL_SERVER_ERROR);
+  }
+};
+
+export { getPost, postPost, updatePost, deletePost };
